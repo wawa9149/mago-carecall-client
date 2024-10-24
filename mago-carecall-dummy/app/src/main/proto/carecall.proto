@@ -1,0 +1,162 @@
+syntax = "proto3";
+
+package com.mago.carecall.grpc;
+
+option java_multiple_files = true;
+option java_package = "com.mago.carecall.grpc.lib";
+option java_outer_classname = "CareCallEventProto";
+
+import "google/protobuf/empty.proto";
+
+// The CareCallEventService service definition.
+service CareCallEventService {
+  // The event request method.
+  rpc eventRequest(EventRequest) returns (EventResponse);
+  // The audio stream method.
+  rpc audioStream(stream AudioStreamRequest) returns (stream AudioStreamResponse);
+  // The delivery stream method.
+  rpc deliveryStream(google.protobuf.Empty) returns (stream DeliveryResponse);
+  // The error stream method.
+  rpc errorStream(google.protobuf.Empty) returns (stream ErrorResponse);
+}
+
+// The event request message.
+message EventRequest {
+  enum ActionEvent {
+    DIALOG_START = 0;                 // Start a new dialog.
+    DIALOG_END = 1;                   // End the dialog.
+    SHOW_DIALOG = 9;                  // Shows the contents of the dialog.
+
+    TURN_START = 10;                  // Start a new utterance.
+    TURN_PAUSE = 11;                  // Pause the utterance.
+    TURN_RESUME = 12;                 // Resume the utterance.
+    TURN_END = 13;                    // End the utterance.
+  }
+  ActionEvent event = 1;              // The playing event.
+  string dialogId = 2;                // The dialog id.
+}
+
+// The event response message.
+message EventResponse {
+  string dialogId = 1;                // The dialog id.
+  string turnId = 2;                  // The turn id.
+  GreetingResponse greeting = 3;       // The greeting message.
+}
+
+// The greeting message.
+message GreetingResponse {
+  string action = 1;                  // The action.
+  string text = 2;                    // The text content.
+}
+
+// The content chunk request message.
+message AudioStreamRequest {
+  string dialogId = 1;                // The dialog id.
+  string turnId = 2;                  // The turn id.
+  bytes content = 3;                  // The file content.
+}
+
+// The content response message.
+message AudioStreamResponse {
+  enum Status {
+    PAUSE = 0;                        // The pause status.
+    END = 1;                          // The end status.
+    ERROR = 9;                        // The error status.
+  }
+  Status status = 1;                  // The status.
+}
+
+// The delivery message.
+message DeliveryResponse {
+  enum Action {
+    SPEECH_TO_TEXT = 0;               // The speech to text.
+    DIALOG = 1;                       // The conversation.
+    EMOTION_RECOGNITION = 3;          // The emotion recognition.
+    DEMENTIA_DETECTION = 4;           // The dementia detection.
+    DEPRESSION_DETECTION = 5;         // The depression detection.
+  }
+  Action action = 1;                  // The action type.
+  string dialogId = 2;                // The dialog id.
+  string turnId = 3;                  // The turn id.
+  SpeechContent speech = 4;           // The speech content.
+  DialogContent dialog = 5;           // The dialog.
+  EmotionContent emotion = 6;         // The emotion content.
+  DementiaContent dementia = 7;       // The dementia content.
+  DepressionContent depression = 8;   // The depression content.
+}
+
+// The depression content.
+message DepressionContent {
+  float negative = 1;                 // The negative.
+  float positive = 2;                 // The positive.
+}
+
+// The dementia content.
+message DementiaContent {
+  float control = 1;                  // The control.
+  float dementia = 2;                 // The dementia.
+}
+
+// The emotion content.
+message EmotionContent {
+  uint32 neutral = 1;                 // The neutral emotion.
+  uint32 happiness = 2;               // The happiness emotion.
+  uint32 sadness = 3;                 // The sadness emotion.
+  uint32 angry = 4;                   // The angry emotion.
+  uint32 surprise = 5;                // The surprise emotion.
+}
+
+// The speech content.
+message SpeechContent {
+  string text = 1;                    // The text content.
+  AudioInfo audio = 2;                // The audio information.
+}
+
+// The dialog content.
+message DialogContent {
+  string stage = 1;                   // The stage.
+  uint32 turn = 2;                    // The turn.
+  DialogContentInput input = 3;       // The input.
+  DialogContentResponse response = 4; // The response.
+}
+
+// The dialog content response.
+message DialogContentResponse {
+  string text = 1;                    // The text content.
+  string action = 2;                  // The action.
+}
+
+// The dialog content input.
+message DialogContentInput {
+  string stage = 1;                   // The stage.
+  uint32 turn = 2;                    // The turn.
+  DialogContentUser user = 3;         // The user.
+  DialogContentS2t s2t = 4;           // The speech to text.
+}
+
+// The dialog content speech to text.
+message DialogContentS2t {
+  string text = 1;                    // The text content.
+  float score = 2;                    // The score.
+  double duration = 3;                 // The duration.
+}
+
+// The dialog content user.
+message DialogContentUser {
+  string id = 1;                      // The user id.
+  string name = 2;                    // The user name.
+}
+
+// The audio information.
+message AudioInfo {
+  float duration = 1;                 // The duration.
+  uint32 sampleRate = 2;              // The sample rate.
+  uint32 channels = 3;                // The channels.
+}
+
+// The error message.
+message ErrorResponse {
+  uint32 code = 1;                    // The error code.
+  string message = 2;                 // The error message.
+  string reason = 3;                  // The error reason.
+}
