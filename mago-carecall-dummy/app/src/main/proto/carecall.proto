@@ -54,6 +54,7 @@ message AudioStreamRequest {
   string dialogId = 1;                // The dialog id.
   string turnId = 2;                  // The turn id.
   bytes content = 3;                  // The file content.
+  uint32 ttsStatus = 4;               // The TTS status.
 }
 
 // The content response message.
@@ -61,6 +62,7 @@ message AudioStreamResponse {
   enum Status {
     PAUSE = 0;                        // The pause status.
     END = 1;                          // The end status.
+    TIMEOUT = 8;                      // The timeout status.
     ERROR = 9;                        // The error status.
   }
   Status status = 1;                  // The status.
@@ -138,7 +140,7 @@ message DialogContentInput {
 message DialogContentS2t {
   string text = 1;                    // The text content.
   float score = 2;                    // The score.
-  double duration = 3;                 // The duration.
+  float duration = 3;                 // The duration.
 }
 
 // The dialog content user.
@@ -149,7 +151,7 @@ message DialogContentUser {
 
 // The audio information.
 message AudioInfo {
-  float duration = 1;                 // The duration.
+  double duration = 1;                // The duration.
   uint32 sampleRate = 2;              // The sample rate.
   uint32 channels = 3;                // The channels.
 }

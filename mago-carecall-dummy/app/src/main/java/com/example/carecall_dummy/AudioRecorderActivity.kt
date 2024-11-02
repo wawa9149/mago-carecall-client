@@ -78,6 +78,7 @@ class AudioRecorderActivity : ComponentActivity() {
 
     var dialogId: String = "" // 대화 ID
     var turnId: String = "" // 턴 ID
+    var ttsStatus: Int = 0 // TTS 상태
 
     // ViewModel 초기화
     private val mainViewModel: MainViewModel by viewModels()
@@ -100,10 +101,15 @@ class AudioRecorderActivity : ComponentActivity() {
 
                 override fun onStart(utteranceId: String?) {
                     mainViewModel.setTtsIsSpeaking(true) // TTS가 시작될 때 상태 변경
+                    ttsStatus = 1 // TTS 상태 변경
+                    // TTS 시작 시 녹음 시작
+                    if (!mainViewModel.recording.value) {
+                        startRecording() }
                 }
 
                 override fun onDone(utteranceId: String?) {
                     mainViewModel.setTtsIsSpeaking(false) // TTS가 끝났을 때 상태 변경
+                    ttsStatus = 0 // TTS 상태 변경
                 }
 
                 override fun onError(utteranceId: String?) {
@@ -122,8 +128,6 @@ class AudioRecorderActivity : ComponentActivity() {
                             .background(
                                 brush = Brush.verticalGradient(
                                     colors = listOf(
-//                                        Color(0xB3000000), // rgba(0, 0, 0, 0.7)
-//                                        Color(0xE6000000)  // rgba(0, 0, 0, 0.9)
                                         Color(0xFF80B3FF),
                                         Color(0xFFD2FFC2)
                                     ),
@@ -169,11 +173,11 @@ class AudioRecorderActivity : ComponentActivity() {
 
         // Column에 Modifier 추가하여 중앙 정렬
         Column(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier.fillMaxSize().padding(20.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(text = ttsText, textAlign = TextAlign.Center, color = Color.White, fontSize = 20.sp)  // TTS 텍스트 출력
+            Text(text = ttsText, textAlign = TextAlign.Center, color = Color.White, fontSize = 18.sp)  // TTS 텍스트 출력
 
             Row(
                 modifier = Modifier.padding(25.dp),
@@ -367,11 +371,12 @@ class AudioRecorderActivity : ComponentActivity() {
                         val read = audioRecord?.read(buffer, 0, buffer.size) ?: 0
                         if (read > 0) {
                             Log.d("AudioRecorder", "Audio data read: $read bytes")
-                            Log.d("AudioRecorder", "Audio data: ${buffer.contentToString()}")
+                            Log.d("AudioRecorder", "TTS status: $ttsStatus, Audio data: ${buffer.contentToString()}")
                             val audioChunkRequest = AudioStreamRequest.newBuilder()
                                 .setDialogId(dialogId)
                                 .setTurnId(turnId)
                                 .setContent(ByteString.copyFrom(buffer, 0, read))
+                                .setTtsStatus(ttsStatus)
                                 .build()
                             emit(audioChunkRequest)
                         }
@@ -384,6 +389,7 @@ class AudioRecorderActivity : ComponentActivity() {
                     when (response.status) {
                         AudioStreamResponse.Status.PAUSE -> Log.d("AudioRecorder", "Audio stream paused")
                         AudioStreamResponse.Status.END -> stopRecording()
+                        AudioStreamResponse.Status.TIMEOUT -> stopRecording()
                         else -> Log.d("AudioRecorder", "Unknown response status: ${response.status}")
                     }
                 }
